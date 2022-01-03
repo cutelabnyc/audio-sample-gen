@@ -4,6 +4,8 @@ import subprocess
 import mutagen
 import ffmpeg
 import pdb
+import tempfile
+import os
 
 def write_midi_file(pitch, msduration, dest, velocity=100):
     
@@ -27,4 +29,8 @@ def resample_audio(inmidipitch, outmidipitch, infile, outfile):
     # For now assume 44100
     ratio = (2 ** (1/12)) ** (outmidipitch - inmidipitch)
     out_sr = int(ratio * 44100)
-    exec_resample = subprocess.run(["ffmpeg", "-i", infile, "-af", "asetrate=r={}".format(out_sr), outfile])
+
+    with tempfile.TemporaryDirectory() as td:
+        tmpout = os.path.join(td, "tmp.wav");
+        exec_resample = subprocess.run(["ffmpeg", "-y", "-i", infile, "-af", "asetrate=r={}".format(out_sr), tmpout])
+        exc_downsample = subprocess.run(["sox", tmpout, "-r", "44100", outfile])
